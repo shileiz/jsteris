@@ -41,28 +41,28 @@
 			switch(e.keyCode){
 					case 37: 
 						if(y>0) {y-=1;}
-						repainBoard();
+						repaintBoard();
 						drawShape(x,y);
 						break;
 					case 38: 
 						if(x>0) {x-=1;}
-						repainBoard();
+						repaintBoard();
 						drawShape(x,y);					
 						break;
 					case 39: 
 						if(y<9) {y+=1;}
-						repainBoard();
+						repaintBoard();
 						drawShape(x,y);
 						break;
 					case 40: 
 						if(x<19) {x+=1;}
-						repainBoard();
+						repaintBoard();
 						drawShape(x,y);					
 						break;
 				}
 			}
 			
-			function repainBoard(){
+			function repaintBoard(){
 			var row = document.getElementById("board").rows.length;
 			var col = document.getElementById("board").rows[0].cells.length;
 			for(var i=0;i<row;i++)
