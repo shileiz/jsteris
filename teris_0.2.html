@@ -1,0 +1,84 @@
+<html>
+	<style>
+	#board tr td {
+		width: 20px;
+		height: 20px;
+		background-Color: #cccccc;
+		border: 1px solid #6B78A9;
+	}
+	</style>
+	<script language="javascript">
+	/*
+		这个版本在游戏面板上画出一个绿色方块，可以用键盘控制其上下左右移动
+		1、DOM中，Table对象的rows[]属性和cells[]属性
+		2、DOM中的style属性
+		3、给<body>设置onkeydown属性来监听键盘事件
+		4、浏览器把键盘事件作为参数传递给javascript代码，onkeydown调用keyHandler函数时，参数名必须写event
+		5、全局变量x，y记录绿色方块的位置
+		6、必须添加一个重画整个board的方法:repaintBoard()，来使绿色不遗留
+		7、数组有length属性来取得数组的长度
+		8、后续用两个全局变量来保持board的长和宽，没必要再用length来动态取长度
+	
+	*/
+			var x=0,y=0;
+			
+			function initBoard(row, col) {
+				for(var i = 0; i < row; i++) {
+					document.write('<tr>');
+					for(var j = 0; j < col; j++) {
+						document.write('<td></td>');
+					}
+					document.write('</tr>');
+				}
+			}
+			
+			function drawShape(x,y) {
+			//在board中的第x行第y列画一个绿色方块，注：x、y均从0开始计数
+			document.getElementById("board").rows[x].cells[y].style.backgroundColor = "green";			
+			}
+			
+			function keyHandler(e){
+			switch(e.keyCode){
+					case 37: 
+						if(y>0) {y-=1;}
+						repainBoard();
+						drawShape(x,y);
+						break;
+					case 38: 
+						if(x>0) {x-=1;}
+						repainBoard();
+						drawShape(x,y);					
+						break;
+					case 39: 
+						if(y<9) {y+=1;}
+						repainBoard();
+						drawShape(x,y);
+						break;
+					case 40: 
+						if(x<19) {x+=1;}
+						repainBoard();
+						drawShape(x,y);					
+						break;
+				}
+			}
+			
+			function repainBoard(){
+			var row = document.getElementById("board").rows.length;
+			var col = document.getElementById("board").rows[0].cells.length;
+			for(var i=0;i<row;i++)
+				{
+					for(var j=0;j<col;j++)
+						{
+							document.getElementById("board").rows[i].cells[j].style.backgroundColor = "#cccccc";
+						}
+				}
+			}
+	</script>
+	<body onkeydown="keyHandler(event)">
+		<table id="board">
+		<script>
+		initBoard(20,10);
+		</script>
+		</table>
+	</body>
+</html>

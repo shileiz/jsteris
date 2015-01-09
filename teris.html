@@ -1,0 +1,526 @@
+﻿<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+		<title>俄罗斯方块Demo</title>
+		<style>
+#board tr td {
+	width: 20px;
+	height: 20px;
+	background-Color: #cccccc;
+	border: 1px solid #6B78A9;
+}
+
+#main {
+	margin: auto;
+	width: 360px;
+	height: 400px;
+}
+
+#mainLeft {
+	margin: 0;
+	padding: 0;
+	float: left;
+}
+
+#mainRight {
+	margin: 0;
+	float: left;
+}
+
+#preBoard tr td {
+	width: 20px;
+	height: 20px;
+	background-color: #cccccc;
+	border: 1px solid #6B78A9;
+}
+
+body {
+	background-color: #FFFF99;
+}
+
+input {
+	border: 1px solid #6B78A9;
+	background: #66FF66
+}
+</style>
+<script language="javascript">
+		
+	var tbl;  //主窗口
+	var preTbl; //预览窗口
+	var status = 0; //游戏的状态：0表示未开始；1表示游戏进行中； 2表示游戏结束；3表示游戏暂停
+	var timer;   //定时器
+    var interval = 1000; // 下落时间间隔
+	var bgColor = "#cccccc"; //面板背景色，可以根据喜好更改
+	var cuteColor = "green"; //方块颜色，也可以根据喜好更改
+	var score = 0; //总得分数
+	var lineScore = 100; //单位得分数，这里以行为单位
+	//定义一个主面板数组board,它和页面的table对应，0--表示都没有被占领；1--表示该方格已经被占领
+	var board = new Array(18); 
+	//初始化该面板的状态数组，该数组的元素都是一个2维的数组
+	for(var i = 0; i < 18; i++){
+		board[i] = new Array(10);
+	}
+	for(var i = 0; i < 18; i++){
+		for(var j = 0; j < 10; j++){
+			board[i][j]=0;
+		}
+	}
+	
+	var activeBlock; //定义变量activeBlock表示当前活动方块
+	var previewBlock; //定义变量previewBlock表示预览方块
+	var nextBlock; //下一个方块
+	var nowBlock ; //暂停记录窗口数组
+    var preBlock;  //暂停记录预览数组
+	
+	//生成方块；方块有7中基本的形状
+	function createBlock(){
+		//定义一个表示方块的四个元素的数组；因为一个方块由4个方格造成
+		var block = new Array(4);
+		//生成一个0-6的随机数，即随机生成一个方块
+		var tempNum = (Math.floor(Math.random()*20) + 1)%7;
+		switch(tempNum){
+			case 0:
+				block = [{x:0,y:5},{x:1,y:4},{x:1,y:5},{x:2,y:4}];
+				break;
+			case 1:
+				block = [{x:0,y:4},{x:1,y:4},{x:1,y:5},{x:2,y:4}];
+				break;
+			case 2:
+				block = [{x:0,y:5},{x:1,y:4},{x:1,y:5},{x:2,y:5}];
+				break;
+			case 3:
+				block = [{x:0,y:4},{x:0,y:5},{x:1,y:4},{x:1,y:5}];
+				break;
+			case 4:
+				block = [{x:0,y:4},{x:0,y:5},{x:1,y:4},{x:2,y:4}];
+				break;
+			case 5:
+				block = [{x:0,y:4},{x:0,y:5},{x:1,y:5},{x:2,y:5}];
+				break;
+			case 6:
+				block = [{x:0,y:5},{x:1,y:5},{x:2,y:5},{x:3,y:5}];
+				break;
+		}
+		return block;  //将生成的方块返回
+	}
+	
+	//给方块着色--填充色或者原始颜色，由参数确定颜色
+	function paintColor(color){
+		//根据方块中方格的个数来决定循环的次数
+		for(var i = 0; i < activeBlock.length; i++){
+			tbl.rows[activeBlock[i].x].cells[activeBlock[i].y].style.backgroundColor = color;
+		}
+	}
+	
+	//显示或者擦除预览方块，由参数确定颜色
+	function paintPreview(color){
+		for(var i = 0; i < 4; i++){
+			preTbl.rows[previewBlock[i].x].cells[previewBlock[i].y].style.backgroundColor = color;
+		}
+	}
+	
+	//绘制主面板或者删除颜色
+	function paintBoard(color){
+		for(var i = 0 ; i < 18; i++){
+			for(var j = 0; j < 10; j++){
+				if(board[i][j] == 1){
+					tbl.rows[i].cells[j].style.backgroundColor = color;
+				}
+			}
+		}
+	}
+	
+	//更新分数
+	function updateScore(){
+		document.getElementById("score").innerHTML = score;
+	}
+	
+	//该方法主要是检查是否已经触边或者被占了
+	function isCellValid(x, y){ 
+          if(x > 17 || x < 0 || y > 9 || y < 0){
+            return false;   
+          }   
+          if(board[x][y]==1){
+            return false;   
+          }   
+          return true;   
+        }   
+	
+	//检查下一个方格是否还可以放到主面板中
+	function validateBlock(block){
+		//注意：这里block并没有指定具体的类型，它的实际内容由传入的nextBlock来决定
+		if(!block){ // 判断传进来的block对象是否为空
+			return false;
+		}
+		//遍历下个方块的每一个方格，看是否有不符合条件的方格
+		for(var i = 0 ; i < 4; i++){
+			if(!isCellValid(block[i].x,block[i].y)){
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	//逻辑上的修改面板显示状态
+	function updateBoard(){
+		for(var i = 0; i < 4; i++){
+			board[activeBlock[i].x][activeBlock[i].y] = 1;
+		}
+	}
+	
+	//该方法主要是检查方块是否已经触底，并且检查方块向下移动一个空格是否有效
+	function checkBottomBorder(){   
+          for(var i = 0; i < activeBlock.length; i++){   
+            if(activeBlock[i].x==17){   
+              return false;   
+            }   
+            if(!isCellValid(activeBlock[i].x+1, activeBlock[i].y)){   
+              return false;   
+            }   
+          }   
+          return true;   
+        }   
+		
+	//在方块移动的过程中，方块分成两部分：一部分是变动的，也就是还在移动的方块
+	//还有一部分是已经固定的方块，该部分已经触底了，不能再移动了，除非涉及到取消行的事件
+	//方块向下移动方法
+	function moveDown(){
+		if(checkBottomBorder()){
+			paintColor(bgColor); //如果没有触底，就将当前的方块颜色置为背景色
+			//当前方块中所有方格向下移动一个方位
+			for(var i = 0; i < activeBlock.length; i++){
+				activeBlock[i].x += 1;
+			}
+			paintColor(cuteColor); //重新绘制当前方块到图形当中
+		}else{  //方块已触底情况处理
+			var lines = 0;
+                        var mark = 0; //当前得分单位 数，以行为单位
+			//这里是处理已经触底和已经固定下来的方块的部分，如果该方块已固定，就要取消定时器，要它停止向下运动
+			clearInterval(timer);
+
+			//更新主面板，因为主面板这时候的方格还有一些不是已经固定下来的方格的颜色
+			//注意：这里只是逻辑上的修改；修改了该面板的方格的显示状态
+			updateBoard();
+                        paintBoard(bgColor); //把面板中的显示的固定状态全部还原为背景色
+			//消行，lines用于统计要删除的行数
+			lines = deleteLines();
+			
+			//对返回的行数进行判断看是否要进行积分的累加
+			if(lines != 0){
+			    //判断行数，并给出得分
+				if(lines == 1){
+                                  mark = 1;
+                                }else if(lines == 2){
+				  mark = 3;
+				}
+				else if(lines == 3){
+				  mark = 8;
+				}
+				else {
+				  mark = 15;
+				}
+				score = score + mark * lineScore; //更新总得分数值
+				updateScore(); //更新显示的分数			
+			}
+			paintBoard(cuteColor); //显示更新了的面板
+			//不管是否删除行的操作,都要进行下个方块的预览工作
+			paintPreview(bgColor); //删除预览版面的方块
+
+			//检查玩家是否还可以继续进行游戏
+			//方法是：检查下一个方块是否还可以放到面板中
+			if(!validateBlock(nextBlock)){
+				//如果没办法显示下个方块，就终止游戏
+				alert("游戏结束，感谢您的使用!");
+				status = 2;
+				return;
+			}
+			//如果玩家还可以继续进行游戏；就要更新相关的block为下一次的循环做准备
+			activeBlock = nextBlock;
+			nextBlock = createBlock();
+			previewBlock = copyBlock(nextBlock);
+			paintColor(cuteColor); //给activeBlock着色为填充色
+			//将预览方块显示在主面板中
+			applyPreview();
+			paintPreview(cuteColor); //绘制预览方块
+			//设定时器
+			timer = setInterval(moveDown,interval);
+		}
+	}
+	
+	//复制下一个方块
+	function copyBlock(old){
+		var o = new Array(4); //声明一个4个元素的局部变量数组
+		//给局部变量先初始化，再给它赋值
+		for(var i = 0 ; i < 4; i++){
+			o[i] = {x:0,y:0};
+		}
+		for(var i = 0 ; i < 4; i++){
+			o[i].x = old[i].x;
+			o[i].y = old[i].y;
+		}
+		return o;
+	}
+
+        //逻辑上处理在预览面板中的方块的坐标
+        function applyPreview(){
+                //找出距离左边界最近的方格的y值,记作t,然后整体左移t个单位
+		var t = previewBlock[0].y; 
+		for(var i = 1; i < 4; i++){
+			
+			if(previewBlock[i].y < t){
+				t = previewBlock[i].y;
+			}
+		}
+		//所有方格整体左移t个单位
+		for(var i = 0 ; i < 4 ; i++){
+			previewBlock[i].y -= t;
+		}
+	}
+	
+	//处理用户输入的旋转操作
+	//注意事项：1)首先要对现在的方块进行复制的操作；用来作为尝试旋转操作的中间媒体
+			//2)因为旋转的操作有可能因为跟现有的方格相冲突，所以要进行验证
+	function rotate(){
+		var tempBlock = copyBlock(activeBlock);
+		//先算出方块四个点的中心点；然后四个点围绕中心点旋转90度
+		var cx = Math.round((tempBlock[0].x + tempBlock[1].x + tempBlock[2].x + tempBlock[3].x)/4);
+		var cy = Math.round((tempBlock[0].y + tempBlock[1].y + tempBlock[2].y + tempBlock[3].y)/4);
+		//对临时方块进行旋转的操作
+		for(var i = 0; i < 4; i++){
+			tempBlock[i].x = cx + cy - activeBlock[i].y;
+			tempBlock[i].y = cy - cx + activeBlock[i].x;
+		}
+		//检查旋转后的临时方块的坐标是否合格
+		for(var i = 0 ; i<4; i++){
+			if(!isCellValid(tempBlock[i].x,tempBlock[i].y)){
+				return false;
+			}		
+		}
+		paintColor(bgColor); //把当前方块从面板中删除，即将颜色改成背景色
+		//如果旋转后的方块合法；就把当前的方块的坐标换成临时方块的坐标
+		for(var i = 0; i < 4; i++){
+			activeBlock[i].x = tempBlock[i].x;
+			activeBlock[i].y = tempBlock[i].y;
+		}
+		paintColor(cuteColor); //重新绘制当前方块
+	}
+	
+	//处理用户的输入的右移事件
+	function moveRight(){
+		if(checkRightBorder()){
+			paintColor(bgColor); //把当前方块从面板中删除，即将颜色改成背景色
+			for(var i = 0; i < activeBlock.length; i++){
+				activeBlock[i].y +=1;
+			}
+			paintColor(cuteColor); //重新绘制当前方块
+		}
+	}
+	
+	//检查用户的右移事件是否合法
+	function checkRightBorder(){
+		for(var i = 0 ; i < activeBlock.length; i++){
+			if(activeBlock[i].y == 9){
+				return false;
+			}
+			if(!isCellValid(activeBlock[i].x,activeBlock[i].y+1)){
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	//处理用户输入的左移事件
+	function moveLeft(){
+		//在进行左移的操作之前，首先要检查是否可以进行该操作
+		if(checkLeftBorder()){
+			//如果用户的左移操作合法；就进行左移的一系列操作
+			//首先要先删除面板当中当前方块的显示
+			paintColor(bgColor); //把当前方块从面板中删除，即将颜色改成背景色
+			//更新当前方块的坐标
+			for(var i = 0 ; i<activeBlock.length; i++){
+				activeBlock[i].y -= 1;
+			}
+			paintColor(cuteColor); //重新绘制当前方块
+		}
+	}
+	
+	//检查左边界是否符合移动的要求
+	function checkLeftBorder(){
+		//根据方格的个数，对每个方格进行遍历
+		for(var i = 0; i < activeBlock.length; i++){
+			//检查当前方块是否已经处于面板的最左边
+			if(activeBlock[i].y == 0){
+				return false;
+			}
+			//检查当前方块是否还可以左移，也就是在当前方块的每一个方格的左边是否已经存在有方格
+			//也就是检查当前方块的纵坐标的值-1的坐标情况
+			if(!isCellValid(activeBlock[i].x,activeBlock[i].y-1)){
+				return false;
+			}
+		}
+		return true;
+	}
+
+       //生成一个空行，这里的空行，就是一个10个元素的数组，在逻辑上标记该行没有被占
+	function generateBlankLine(){
+	    var blankLine = new Array(10);
+		for(var i = 0; i < 10; i++){
+			blankLine[i] = 0;
+		}
+		return blankLine;
+	}
+	
+	//处理方格已经固定后，可能整行已经占满的情况，进行消行的操作
+	function deleteLines(){
+		var lines = 0;  //统计已堆满的行数
+		//遍历整个版面，看是否有符合条件的行
+		for(var i = 0; i < 18; i++){
+			var j = 0;  //变量j循环外要使用，统计被占的列数
+			for(; j < 10; j++){
+				if(board[i][j] == 0){ //行内有空格，跳出循环
+					break;
+				}
+			}
+			
+			if(j == 10){ //整行无空格
+			 	lines++; //累加已堆满的行数
+				if(i != 0){ //判断是否还可以继续进行游戏，在这里把第0行全行非空的情况当作游戏不能再进行了
+					//消行，就是抽走一行，那么这行上面的所有行都要进行递换，即向下移动
+					//循环的遍历次数是当前行数-1
+					for(var k = i - 1; k >= 0 ; k--){
+						board[k+1] = board[k];
+					}
+                                        board[0] = generateBlankLine();	//这里递换完行后，比原来少了一行，所以要在版面的头部加上一个空行
+				}
+			}
+		}
+		return lines;
+	}
+	
+	//处理用户输入的键盘时间
+	function keyportControl(e){   
+      if(status != 1){   //不处于游戏进行状态，用户对键盘的操作无效
+         return;  
+      } 
+	  //否则，捕获用户的输入
+	  e = window.event || e;  
+      var code = e.keyCode;  
+      switch(code){   
+        case 37:  
+            moveLeft();  
+            break;      
+        case 38: 
+            rotate();   
+            break;   
+        case 39:   
+            moveRight();   
+            break;  
+        case 40:   
+            moveDown();
+            break;
+      }   
+    } 
+	
+	//获取浏览器函数
+	function isBrowser(s) {
+	  return navigator.userAgent.indexOf(s) != -1;
+    }
+	
+	//开始函数
+	function begin(e){
+	  var bg = document.getElementById('open');
+	  bg.disabled = true;  //游戏开始后，开始按钮就不可用了
+	  document.getElementById('pause').disabled = false;
+	  status = 1;  //修改游戏的状态
+	   /*
+	    var isIE = (document.all && window.ActiveXObject && !window.opera) ? true : false;
+        if(isIE){
+          document.onkeydown = keyportControl;
+        }
+        */
+	   if(isBrowser('MSIE') || isBrowser('Chrome')) {
+		  document.onkeydown = keyportControl;
+	   }else{
+          document.onkeypress = keyportControl;
+        }
+		
+		tbl = document.getElementById("board");   //主面板
+		preTbl = document.getElementById("preBoard");  //预览面板
+		activeBlock = createBlock();
+		nextBlock = createBlock();
+		previewBlock = copyBlock(nextBlock);
+		applyPreview();
+		paintColor(cuteColor);   //绘制方块
+		paintPreview(cuteColor); //绘制预览方块
+		timer = setInterval(moveDown,interval);
+	}
+
+    // 暂停/继续游戏方法
+    function pauseAndMove(){
+      if(status == 3){
+        status = 1;
+        board = nowBlock;
+        previewBlock = preBlock;
+        moveDown();
+      }else{
+        status = 3;
+        nowBlock = board;
+        preBlock = previewBlock;
+        clearInterval(timer);
+      }      
+    }
+
+    //生成表格方法
+	function writeTable(row, col) {
+		for(var i = 0; i < row; i++) {
+			document.write('<tr>');
+			for(var j = 0; j < col; j++) {
+				document.write('<td></td>');
+			}
+			document.write('</tr>');
+		}
+	}
+   
+    //window.onload = begin; 加载时不触发，点击开始键时触发
+</script>
+	</head>
+	<body>
+	俄罗斯方块游戏使用说明：<br>
+	1、此俄罗斯方块游戏为小型网页游戏，需要浏览器的支持，早期版本的浏览器可能不支持。<br>
+	2、此游戏使用页面按钮和键盘的上、下、左、右键进行操控，键盘的上、下、左、右键分别对应变形、下降、左移、右移动作。<br>
+	3、要取得良好手感，请使用键盘进行操控，那样效果与玩俄罗斯方块游戏机无异。<br>
+		<center>
+			<div id="main">
+				<div id="mainLeft">
+					<table id="board" cellspacing=0 cellpadding=0 border=1
+						style="border-collapse: collapse;" align="center">
+						<script>writeTable(18, 10);</script>
+					</table>
+				</div>
+				<div id="mainRight">
+					<table id="preBoard" cellspacing=0 cellpadding=0 border=1
+						style="border-collapse: collapse;">
+						<script>writeTable(4, 4);</script>
+					</table><br>
+					得分: &nbsp;
+					<br>
+					<span id="score">0</span>
+					<br>
+					<br>
+					<input id="open" type="button" value="开始" onclick="begin();" />
+					<br>
+					<br>
+					<input id="pause" type="button" value="暂停" onclick="pauseAndMove();" disabled />
+				</div>
+			</div>
+			<div>
+				  <input type="button" value="变形" onclick="rotate();" /><br>
+				  <input type="button" value="左移" onclick="moveLeft();" />
+				  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				  <input type="button" value="右移" onclick="moveRight();" /><br>
+				  <input type="button" value="下降" onclick="moveDown();" />
+				</div>
+		</center>
+	</body>
+</html>
+

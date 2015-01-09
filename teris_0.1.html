@@ -1,0 +1,32 @@
+<html>
+	<style>
+	#board tr td {
+		width: 20px;
+		height: 20px;
+		background-Color: #cccccc;
+		border: 1px solid #6B78A9;
+	}
+	</style>
+	<script language="javascript">
+	/*
+		这个版本只画出游戏面板： 一个20行10列的表格
+		1、document.write()的用法： 在当前位置写入字符串或html元素或javascript代码
+		2、CSS中id选择器的用法： 以#开头后接id。 #board tr td 表示，id是board的元素内部的tr和td都使用以下的样式
+	
+	*/
+			function initBoard(row, col) {
+				for(var i = 0; i < row; i++) {
+					document.write('<tr>');
+					for(var j = 0; j < col; j++) {
+						document.write('<td></td>');
+					}
+					document.write('</tr>');
+				}
+			}
+	</script>
+	<body>
+		<table id="board">
+		<script>initBoard(20,10);</script>
+		</table>
+	</body>
+</html>
