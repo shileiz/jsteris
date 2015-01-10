@@ -1,0 +1,84 @@
+<html>
+	<style>
+	#board tr td {
+		width: 20px;
+		height: 20px;
+		background-Color: #cccccc;
+		border: 1px solid #6B78A9;
+	}
+	</style>
+	<script language="javascript">
+	/*
+		这个版本把绿色方块改为俄罗斯方块中的“T”形状，用两个全局变量来保持board的长和宽
+		1、用相对坐标表示形状，T形状=[[0,1],[1,0],[1,1],[1,2]]
+			一个形状由4个方块组成，所以用一个长度为4的数组来表示一个形状
+			形状里的每一个方块都由x坐标和y坐标表示，所以数组里的每一个元素是长度为2的数组
+			即一个形状由一个二维数组表示
+		2、用绝对坐标确定形状的位置
+		3、需要修改drawShape()函数，把形状作为第三个参数传进去
+	*/
+			var row=20, col=10;  //全局变量，表board一共有20行，10列 
+			var position_row=0,position_col=0; //把上一版中的x,y改名为 position_row, position_col，这对坐标表示形状的左上角那个方块在board中的位置
+			var shape_t=[[0,1],[1,0],[1,1],[1,2]];
+			function initBoard(row, col) {
+				for(var i = 0; i < row; i++) {
+					document.write('<tr>');
+					for(var j = 0; j < col; j++) {
+						document.write('<td></td>');
+					}
+					document.write('</tr>');
+				}
+			}
+			
+			function drawShape(row,col,shape) {
+			//在board中的第row行第col列画一个shape，这个shape的左上角处于[row,col]处
+				for(var i=0;i<4;i++){
+					block_row=row+shape[i][0];
+					block_col=col+shape[i][1];
+					document.getElementById("board").rows[block_row].cells[block_col].style.backgroundColor = "green";
+				}			
+			}
+			
+			function keyHandler(e){
+			switch(e.keyCode){
+					case 37: 
+						if(position_col>0) {position_col-=1;}
+						repaintBoard();
+						drawShape(position_row,position_col,shape_t);
+						break;
+					case 38: 
+						if(position_row>0) {position_row-=1;}
+						repaintBoard();
+						drawShape(position_row,position_col,shape_t);					
+						break;
+					case 39: 
+						if(position_col<9) {position_col+=1;}
+						repaintBoard();
+						drawShape(position_row,position_col,shape_t);
+						break;
+					case 40: 
+						if(position_row<19) {position_row+=1;}
+						repaintBoard();
+						drawShape(position_row,position_col,shape_t);					
+						break;
+				}
+			}
+			
+			function repaintBoard(){
+			for(var i=0;i<row;i++)
+				{
+					for(var j=0;j<col;j++)
+						{
+							document.getElementById("board").rows[i].cells[j].style.backgroundColor = "#cccccc";
+						}
+				}
+			}
+	</script>
+	<body onkeydown="keyHandler(event)">
+		<table id="board">
+		<script>
+		initBoard(row,col);
+		</script>
+		</table>
+	</body>
+</html>
