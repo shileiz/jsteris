@@ -1,0 +1,122 @@
+<html>
+	<style>
+	#board tr td {
+		width: 20px;
+		height: 20px;
+		background-Color: #cccccc;
+		border: 1px solid #6B78A9;
+	}
+	</style>
+	<script language="javascript">
+	/*
+		这个版本实现0.3中遗留的问题，形状可能会被移出边界。
+		解决这个问题我们需要在每次移动形状之前，判断一下是否可以移动，比如每次左移之前，我调用一个函数，检测一下是否可以继续左移。
+		所以我们添加一个函数：can_move_left()，返回true表示可以继续左移，返回false表示不能继续左移。
+		这个函数需要知道形状现在的位置，以及形状本身，才能做出判断。所以它需要三个参数：row,col,shape。函数很简单：如果形状中每一个方块都可以左移，那么true，一旦遇到一个方块不能左移，那么false：
+			function can_move_left(row,col,shape) {
+				for(var i=0;i<4;i++){
+					if(shape[i][1]+col<=0) return false;
+				}
+				return true;
+			}
+		其实，为了判定是否可以继续左移，我们不需要知道形状当前的“高度”————也就是行数（row），can_move_left()只需要col和shape两个参数，但为了方便理解，我们还是暂且保留参数row。而且这个参数以后也会用到。	
+		同理我们添加判定能否继续右移，和能否继续下移的函数。
+		
+		这个版本遗留一个问题：当先把形状靠边后再变形，可能出现形状超界的情况。我们下个版本解决。
+	*/
+			var row=20, col=10;  
+			var position_row=row/2,position_col=col/2; 
+			var shape_t=[[0,-1],[0,0],[0,1],[-1,0]];
+			function initBoard(row, col) {
+				for(var i = 0; i < row; i++) {
+					document.write('<tr>');
+					for(var j = 0; j < col; j++) {
+						document.write('<td></td>');
+					}
+					document.write('</tr>');
+				}
+			}
+			
+			function drawShape(row,col,shape) {
+				for(var i=0;i<4;i++){
+					block_row=row+shape[i][0];
+					block_col=col+shape[i][1];
+					document.getElementById("board").rows[block_row].cells[block_col].style.backgroundColor = "green";
+				}			
+			}
+			
+			function rotate_clockwise(shape) {
+				for(var i=0;i<4;i++){
+					old_x=shape[i][0]
+					old_y=shape[i][1]
+					new_x=old_y
+					new_y=-old_x
+					shape[i][0]=new_x
+					shape[i][1]=new_y
+				}
+			}
+			
+			function can_move_left(row,col,shape) {
+				for(var i=0;i<4;i++){
+					if(shape[i][1]+col<=0) return false;
+				}
+				return true;
+			}
+			
+			function can_move_right(row,col,shape) {
+				for(var i=0;i<4;i++){
+					if(shape[i][1]+col>=9) return false;
+				}
+				return true;
+			}
+
+			function can_move_down(row,col,shape) {
+				for(var i=0;i<4;i++){
+					if(shape[i][0]+row>=19) return false;
+				}
+				return true;				
+			}			
+			
+			function keyHandler(e){
+			switch(e.keyCode){
+					case 37: //left
+						if(can_move_left(position_row,position_col,shape_t)) {position_col-=1;}
+						repaintBoard();
+						drawShape(position_row,position_col,shape_t);
+						break;
+					case 38: //up
+						repaintBoard();
+						rotate_clockwise(shape_t);
+						drawShape(position_row,position_col,shape_t);					
+						break;
+					case 39: //right
+						if(can_move_right(position_row,position_col,shape_t)) {position_col+=1;}
+						repaintBoard();
+						drawShape(position_row,position_col,shape_t);
+						break;
+					case 40: //down
+						if(can_move_down(position_row,position_col,shape_t)) {position_row+=1;}
+						repaintBoard();
+						drawShape(position_row,position_col,shape_t);					
+						break;
+				}
+			}
+			
+			function repaintBoard(){
+			for(var i=0;i<row;i++)
+				{
+					for(var j=0;j<col;j++)
+						{
+							document.getElementById("board").rows[i].cells[j].style.backgroundColor = "#cccccc";
+						}
+				}
+			}
+	</script>
+	<body onkeydown="keyHandler(event)">
+		<table id="board">
+		<script>
+		initBoard(row,col);
+		</script>
+		</table>
+	</body>
+</html>

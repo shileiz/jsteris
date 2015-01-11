@@ -9,8 +9,9 @@
 	</style>
 	<script language="javascript">
 	/*
-		这个版本实现旋转：当按下向上箭头时，T形状将顺时针旋转
-		顺时针旋转：(x',y')=(y,-x)
+		这个版本解决上个版本的遗留问题：当先把形状靠边后再变形，可能出现形状超界的情况。
+		解决这个问题我们需要在变形之前做一个判断，看看是否能变形。所以加一个函数：can_rotate_clockwise(row,col,shape)
+		这个函数用来
 	*/
 			var row=20, col=10;  
 			var position_row=row/2,position_col=col/2; 
@@ -33,8 +34,18 @@
 				}			
 			}
 			
+			function can_rotate_clockwise(row,col,shape) {
+				for(var i=0;i<4;i++){
+					old_x=shape[i][0]
+					old_y=shape[i][1]
+					new_x=old_y
+					new_y=-old_x
+					if(new_x+row<0 || new_x+row>19 || new_y+col<0 || new_y+col>9) return false;
+				}
+				return true;
+			}			
+			
 			function rotate_clockwise(shape) {
-			//将形状shape顺时针旋转
 				for(var i=0;i<4;i++){
 					old_x=shape[i][0]
 					old_y=shape[i][1]
@@ -45,25 +56,48 @@
 				}
 			}
 			
+			function can_move_left(row,col,shape) {
+				for(var i=0;i<4;i++){
+					if(shape[i][1]+col<=0) return false;
+				}
+				return true;
+			}
+			
+			function can_move_right(row,col,shape) {
+				for(var i=0;i<4;i++){
+					if(shape[i][1]+col>=9) return false;
+				}
+				return true;
+			}
+
+			function can_move_down(row,col,shape) {
+				for(var i=0;i<4;i++){
+					if(shape[i][0]+row>=19) return false;
+				}
+				return true;				
+			}			
+			
 			function keyHandler(e){
 			switch(e.keyCode){
 					case 37: //left
-						if(position_col>0) {position_col-=1;}
+						if(can_move_left(position_row,position_col,shape_t)) {position_col-=1;}
 						repaintBoard();
 						drawShape(position_row,position_col,shape_t);
 						break;
 					case 38: //up
 						repaintBoard();
-						rotate_clockwise(shape_t);
+						if(can_rotate_clockwise(position_row,position_col,shape_t)) {
+							rotate_clockwise(shape_t);
+						}
 						drawShape(position_row,position_col,shape_t);					
 						break;
 					case 39: //right
-						if(position_col<9) {position_col+=1;}
+						if(can_move_right(position_row,position_col,shape_t)) {position_col+=1;}
 						repaintBoard();
 						drawShape(position_row,position_col,shape_t);
 						break;
 					case 40: //down
-						if(position_row<19) {position_row+=1;}
+						if(can_move_down(position_row,position_col,shape_t)) {position_row+=1;}
 						repaintBoard();
 						drawShape(position_row,position_col,shape_t);					
 						break;
