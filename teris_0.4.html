@@ -9,11 +9,11 @@
 	</style>
 	<script language="javascript">
 	/*
-		Õâ¸ö°æ±¾ÊµÏÖĞı×ª£ºµ±°´ÏÂÏòÉÏ¼ıÍ·Ê±£¬TĞÎ×´½«Ë³Ê±ÕëĞı×ª
+		è¿™ä¸ªç‰ˆæœ¬å®ç°æ—‹è½¬ï¼šå½“æŒ‰ä¸‹å‘ä¸Šç®­å¤´æ—¶ï¼ŒTå½¢çŠ¶å°†é¡ºæ—¶é’ˆæ—‹è½¬
 	*/
-			var row=20, col=10;  //È«¾Ö±äÁ¿£¬±íboardÒ»¹²ÓĞ20ĞĞ£¬10ÁĞ 
-			var position_row=0,position_col=0; //°ÑÉÏÒ»°æÖĞµÄx,y¸ÄÃûÎª position_row, position_col£¬Õâ¶Ô×ø±ê±íÊ¾ĞÎ×´µÄ×óÉÏ½ÇÄÇ¸ö·½¿éÔÚboardÖĞµÄÎ»ÖÃ
-			var shape_t=[[0,1],[1,0],[1,1],[1,2]];
+			var row=20, col=10;  //å…¨å±€å˜é‡ï¼Œè¡¨boardä¸€å…±æœ‰20è¡Œï¼Œ10åˆ— 
+			var position_row=row/2,position_col=col/2; //æŠŠä¸Šä¸€ç‰ˆä¸­çš„x,yæ”¹åä¸º position_row, position_colï¼Œè¿™å¯¹åæ ‡è¡¨ç¤ºå½¢çŠ¶çš„å·¦ä¸Šè§’é‚£ä¸ªæ–¹å—åœ¨boardä¸­çš„ä½ç½®
+			var shape_t=[[0,-1],[0,0],[0,1],[-1,0]];
 			function initBoard(row, col) {
 				for(var i = 0; i < row; i++) {
 					document.write('<tr>');
@@ -25,7 +25,7 @@
 			}
 			
 			function drawShape(row,col,shape) {
-			//ÔÚboardÖĞµÄµÚrowĞĞµÚcolÁĞ»­Ò»¸öshape£¬Õâ¸öshapeµÄ×óÉÏ½Ç´¦ÓÚ[row,col]´¦
+			//åœ¨boardä¸­çš„ç¬¬rowè¡Œç¬¬colåˆ—ç”»ä¸€ä¸ªshapeï¼Œè¿™ä¸ªshapeçš„å·¦ä¸Šè§’å¤„äº[row,col]å¤„
 				for(var i=0;i<4;i++){
 					block_row=row+shape[i][0];
 					block_col=col+shape[i][1];
@@ -34,7 +34,7 @@
 			}
 			
 			function rotate_clockwise(shape) {
-			//½«ĞÎ×´shapeË³Ê±ÕëĞı×ª
+			//å°†å½¢çŠ¶shapeé¡ºæ—¶é’ˆæ—‹è½¬
 				for(var i=0;i<4;i++){
 					old_x=shape[i][0]
 					old_y=shape[i][1]
@@ -47,22 +47,22 @@
 			
 			function keyHandler(e){
 			switch(e.keyCode){
-					case 37: 
+					case 37: //left
 						if(position_col>0) {position_col-=1;}
 						repaintBoard();
 						drawShape(position_row,position_col,shape_t);
 						break;
-					case 38: 
+					case 38: //up
 						repaintBoard();
 						rotate_clockwise(shape_t);
 						drawShape(position_row,position_col,shape_t);					
 						break;
-					case 39: 
+					case 39: //right
 						if(position_col<9) {position_col+=1;}
 						repaintBoard();
 						drawShape(position_row,position_col,shape_t);
 						break;
-					case 40: 
+					case 40: //down
 						if(position_row<19) {position_row+=1;}
 						repaintBoard();
 						drawShape(position_row,position_col,shape_t);					
