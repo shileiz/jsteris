@@ -1,0 +1,15 @@
+<html>
+	<body>
+		<script>
+		/*
+			1、window 对象指当前浏览器窗口
+			2、self也指向 window 对象， window.xxx 和 self.xxx 是一回事儿
+			3、window 是最顶层的对象了，document实际上 window.document
+			4、因为 window 是最顶层的对象了，所以可以不写 'window.'，比如我一直都是直接写 document，而不是 window.document
+			5、JavaScript 的全局变量实际上都在 window 域里，比如在所有函数之外定义的 var shape_t，我们可以直接饮用shape_t，也可以用 window.shape_t。所有的全局变量都是属于当前窗口的
+		*/
+			var timer = window.setInterval("document.write('!<br/>')",500);
+			window.setTimeout("clearInterval(timer)",4000);
+		</script>
+	</body>
+</html>

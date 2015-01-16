@@ -1,0 +1,136 @@
+<html>
+	<style>
+	#board tr td {
+		width: 20px;
+		height: 20px;
+		background-Color: #cccccc;
+		border: 1px solid #6B78A9;
+	}
+	</style>
+	<script language="javascript">
+	/*
+		这个版本加入定时器，每隔0.5秒，自动下落一行，落到底就停止。
+	*/
+			var row=20, col=10;  
+			var position_row=row/2,position_col=col/2; 
+			var shape_t=[[0,-1],[0,0],[0,1],[-1,0]];
+			function initBoard(row, col) {
+				for(var i = 0; i < row; i++) {
+					document.write('<tr>');
+					for(var j = 0; j < col; j++) {
+						document.write('<td></td>');
+					}
+					document.write('</tr>');
+				}
+			}
+			
+			/////////// 0.7 add
+			setInterval("move_down()",500)
+				
+			function move_down() {
+				if(can_move_down(position_row,position_col,shape_t)) {position_row+=1;}
+				repaintBoard();
+				drawShape(position_row,position_col,shape_t);		
+			}
+			
+			///////// 0.7 add
+				
+			function drawShape(row,col,shape) {
+				for(var i=0;i<4;i++){
+					block_row=row+shape[i][0];
+					block_col=col+shape[i][1];
+					document.getElementById("board").rows[block_row].cells[block_col].style.backgroundColor = "green";
+				}			
+			}
+			
+			function can_rotate_clockwise(row,col,shape) {
+				for(var i=0;i<4;i++){
+					old_x=shape[i][0];
+					old_y=shape[i][1];
+					new_x=old_y;
+					new_y=-old_x;
+					if(new_x+row<0 || new_x+row>19 || new_y+col<0 || new_y+col>9) return false;
+				}
+				return true;
+			}			
+			
+			function rotate_clockwise(shape) {
+				for(var i=0;i<4;i++){
+					old_x=shape[i][0];
+					old_y=shape[i][1];
+					new_x=old_y;
+					new_y=-old_x;
+					shape[i][0]=new_x;
+					shape[i][1]=new_y;
+				}
+			}
+			
+			function can_move_left(row,col,shape) {
+				for(var i=0;i<4;i++){
+					if(shape[i][1]+col<=0) return false;
+				}
+				return true;
+			}
+			
+			function can_move_right(row,col,shape) {
+				for(var i=0;i<4;i++){
+					if(shape[i][1]+col>=9) return false;
+				}
+				return true;
+			}
+
+			function can_move_down(row,col,shape) {
+				for(var i=0;i<4;i++){
+					if(shape[i][0]+row>=19) return false;
+				}
+				return true;				
+			}			
+			
+			function keyHandler(e){
+			switch(e.keyCode){
+					case 37: //left
+						if(can_move_left(position_row,position_col,shape_t)) {position_col-=1;}
+						repaintBoard();
+						drawShape(position_row,position_col,shape_t);
+						break;
+					case 38: //up
+						repaintBoard();
+						if(can_rotate_clockwise(position_row,position_col,shape_t)) {
+							rotate_clockwise(shape_t);
+						}
+						drawShape(position_row,position_col,shape_t);					
+						break;
+					case 39: //right
+						if(can_move_right(position_row,position_col,shape_t)) {position_col+=1;}
+						repaintBoard();
+						drawShape(position_row,position_col,shape_t);
+						break;
+					/*
+					 comment out at 0.7
+					case 40: //down
+						if(can_move_down(position_row,position_col,shape_t)) {position_row+=1;}
+						repaintBoard();
+						drawShape(position_row,position_col,shape_t);					
+						break;
+					*/
+				}
+			}
+			
+			function repaintBoard(){
+			for(var i=0;i<row;i++)
+				{
+					for(var j=0;j<col;j++)
+						{
+							document.getElementById("board").rows[i].cells[j].style.backgroundColor = "#cccccc";
+						}
+				}
+			}
+	</script>
+	<body onkeydown="keyHandler(event)">
+		<table id="board">
+		<script>
+		initBoard(row,col);
+		</script>
+		</table>
+	</body>
+</html>
