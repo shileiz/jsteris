@@ -11,7 +11,7 @@
 	/*
 		这个版本解决上个版本的遗留问题：当先把形状靠边后再变形，可能出现形状超界的情况。
 		解决这个问题我们需要在变形之前做一个判断，看看是否能变形。所以加一个函数：can_rotate_clockwise(row,col,shape)
-		这个函数用来
+		这个函数用来判断变形后是否会有越界的情况。函数很简单，函数体跟 rotate_clockwise(row,col,shape) 基本一致，只是加了一个if，看看shape中是否有某个方块越界了。
 	*/
 			var row=20, col=10;  
 			var position_row=row/2,position_col=col/2; 
