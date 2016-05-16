@@ -1,0 +1,168 @@
+<html>
+	<style>
+	#board tr td {
+		width: 20px;
+		height: 20px;
+		background-Color: #cccccc;
+		border: 1px solid #6B78A9;
+	}
+	</style>
+	<script language="javascript">
+	/*
+		这个版本加入如下功能：
+		* 一旦shape落到底就不能再动了。
+			* 弄个一维数组 dead_blocks 记录已经落到底的 block。位于 [i,j] 的 block 在这个数组里对应的下标是i*col+j 
+			  initBoard 里把 dead_blocks 的所有元素赋值为0。
+			  后续游戏过程中，如果位于 [i,j] 的 block 变成了 dead_block，则 dead_blocks[i*col+j]=1
+			* 弄个全局变量 cu_shape 表示当前能动的 shape
+			* move_down 函数里，一旦验证 can_move_down 失败了（说明落到底了），则把 cu_shape 的4个block加入到dead_blocks里
+			* repaintBoard 时，dead_block 就不用重新画了。
+			* 生成新的 cu_shape: 即 position_row=row,position_col=col/2;
+		遗留问题：
+		* 检测是否到底时没有考虑 dead_block，只考虑是否到达最后一行，所以会‘穿透’那些 dead_block
+		* 下个版本加上一落到底
+	*/
+			var row=20, col=10;  
+			var position_row=0,position_col=col/2; 
+			var cu_shape=[[0,-1],[0,0],[0,1],[-1,0]];
+			var dead_blocks=new Array(row*col);
+			
+			function initBoard(row, col) {
+				for(var i = 0; i < row; i++) {
+					document.write('<tr>');
+					for(var j = 0; j < col; j++) {
+						document.write('<td></td>');
+						dead_blocks[i*col+j]=0;
+					}
+					document.write('</tr>');
+				}
+			}			
+			
+			setInterval("move_down()",500)
+				
+			function move_down() {
+				if(can_move_down(position_row,position_col,cu_shape)) 
+				{
+					position_row+=1;
+					repaintBoard();
+					drawShape(position_row,position_col,cu_shape);	
+				}
+				else
+				{
+					// 把 cu_shape 的4个block加入到dead_blocks里
+					for(var i=0;i<4;i++)
+					{
+						var dead_block_x = position_row+cu_shape[i][0];
+						var dead_block_y = position_col+cu_shape[i][1];
+						dead_blocks[dead_block_x*col+dead_block_y]=1;
+					}
+					// 生成新的 cu_shape
+					position_row=0;
+					position_col=col/2;
+				}
+	
+			}			
+				
+			function drawShape(row,col,shape) {
+				for(var i=0;i<4;i++){
+					block_row=row+shape[i][0];
+					block_col=col+shape[i][1];
+					document.getElementById("board").rows[block_row].cells[block_col].style.backgroundColor = "green";
+				}			
+			}
+			
+			function can_rotate_clockwise(row,col,shape) {
+				for(var i=0;i<4;i++){
+					old_x=shape[i][0];
+					old_y=shape[i][1];
+					new_x=old_y;
+					new_y=-old_x;
+					if(new_x+row<0 || new_x+row>19 || new_y+col<0 || new_y+col>9) return false;
+				}
+				return true;
+			}			
+			
+			function rotate_clockwise(shape) {
+				for(var i=0;i<4;i++){
+					old_x=shape[i][0];
+					old_y=shape[i][1];
+					new_x=old_y;
+					new_y=-old_x;
+					shape[i][0]=new_x;
+					shape[i][1]=new_y;
+				}
+			}
+			
+			function can_move_left(row,col,shape) {
+				for(var i=0;i<4;i++){
+					if(shape[i][1]+col<=0) return false;
+				}
+				return true;
+			}
+			
+			function can_move_right(row,col,shape) {
+				for(var i=0;i<4;i++){
+					if(shape[i][1]+col>=9) return false;
+				}
+				return true;
+			}
+
+			function can_move_down(row,col,shape) {
+				for(var i=0;i<4;i++){
+					if(shape[i][0]+row>=19) return false;
+				}
+				return true;				
+			}			
+			
+			function keyHandler(e){
+			switch(e.keyCode){
+					case 37: //left
+						if(can_move_left(position_row,position_col,cu_shape)) {position_col-=1;}
+						repaintBoard();
+						drawShape(position_row,position_col,cu_shape);
+						break;
+					case 38: //up
+						repaintBoard();
+						if(can_rotate_clockwise(position_row,position_col,cu_shape)) {
+							rotate_clockwise(cu_shape);
+						}
+						drawShape(position_row,position_col,cu_shape);					
+						break;
+					case 39: //right
+						if(can_move_right(position_row,position_col,cu_shape)) {position_col+=1;}
+						repaintBoard();
+						drawShape(position_row,position_col,cu_shape);
+						break;
+					/*
+					 comment out at 0.7
+					 TODO：后续改成按下方向则一落到底
+					case 40: //down
+						if(can_move_down(position_row,position_col,shape_t)) {position_row+=1;}
+						repaintBoard();
+						drawShape(position_row,position_col,shape_t);					
+						break;
+					*/
+				}
+			}
+			
+			function repaintBoard(){
+			for(var i=0;i<row;i++)
+				{
+					for(var j=0;j<col;j++)
+						{
+							if(dead_blocks[i*col+j]==0)
+								{
+									document.getElementById("board").rows[i].cells[j].style.backgroundColor = "#cccccc";
+								}
+						}
+				}
+			}
+	</script>
+	<body onkeydown="keyHandler(event)">
+		<table id="board">
+		<script>
+		initBoard(row,col);
+		</script>
+		</table>
+	</body>
+</html>
