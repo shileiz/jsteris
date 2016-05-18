@@ -1,0 +1,184 @@
+<html>
+	<style>
+	#board tr td {
+		width: 20px;
+		height: 20px;
+		background-Color: #cccccc;
+		border: 1px solid #6B78A9;
+	}
+	</style>
+	<script language="javascript">
+	/*
+		这个版本修改一些变量的命名：
+		* 表示总行数和列数的全局变量 row、col：改为 total_row、total_col
+		* 函数 drawShape、can_move_down、can_move_left、can_move_right 的形参，把row、col改为 cu_row、cu_col
+		
+		这个版本加入如下功能：
+		* 检测是否可以移动或变形时考虑 dead_block: 
+			* 修改 can_move_down、can_move_left、can_move_right、 can_rotate_clockwise 等函数
+			* 如果当前shape的任意一个block在变形或者移动后，会碰到 dead_block 就返回 false
+		* 下方向键设置为下移一行
+		
+		遗留问题：
+		* 下个版本加入一落到底（空格键）
+		* 另外有个小bug：在按下方向键的时候，判断能否左右移动后，如果失败了也会重画游戏面板和shape，这是不对的。下个版本改一下。
+		* 很多功能需要封装成函数
+	*/
+			var total_row=20, total_col=10;  
+			var position_row=0, position_col=total_col/2; 
+			var cu_shape=[[0,-1],[0,0],[0,1],[-1,0]];
+			var dead_blocks=new Array(total_row*total_col);
+			
+			function initBoard(row, col) {
+				for(var i = 0; i < row; i++) {
+					document.write('<tr>');
+					for(var j = 0; j < col; j++) {
+						document.write('<td></td>');
+						dead_blocks[i*col+j]=0;
+					}
+					document.write('</tr>');
+				}
+			}			
+			
+			setInterval("move_down()",500)
+				
+			function move_down() {
+				if(can_move_down(position_row,position_col,cu_shape)) 
+				{
+					position_row+=1;
+					repaintBoard();
+					drawShape(position_row,position_col,cu_shape);	
+				}
+				else
+				{
+					// 把 cu_shape 的4个block加入到dead_blocks里
+					for(var i=0;i<4;i++)
+					{
+						var dead_block_x = position_row+cu_shape[i][0];
+						var dead_block_y = position_col+cu_shape[i][1];
+						dead_blocks[dead_block_x*total_col+dead_block_y]=1;
+					}
+					// 生成新的 cu_shape
+					position_row=0;
+					position_col=total_col/2;
+				}
+	
+			}			
+				
+			function drawShape(cu_row, cu_col, shape) {
+				for(var i=0;i<4;i++){
+					block_row=cu_row+shape[i][0];
+					block_col=cu_col+shape[i][1];
+					document.getElementById("board").rows[block_row].cells[block_col].style.backgroundColor = "green";
+				}			
+			}
+			
+			function can_rotate_clockwise(cu_row, cu_col, shape) {
+				for(var i=0;i<4;i++){
+					old_x=shape[i][0];
+					old_y=shape[i][1];
+					new_x=old_y;
+					new_y=-old_x;
+					if(new_x+cu_row<0 || new_x+cu_row>19 || new_y+cu_col<0 || new_y+cu_col>9) return false;
+					// added at version 0.9
+					new_row = new_x+cu_row;
+					new_col = new_y+cu_col;
+					if(dead_blocks[new_row*total_col+new_col]) return false;
+				}
+				return true;
+			}			
+			
+			function rotate_clockwise(shape) {
+				for(var i=0;i<4;i++){
+					old_x=shape[i][0];
+					old_y=shape[i][1];
+					new_x=old_y;
+					new_y=-old_x;
+					shape[i][0]=new_x;
+					shape[i][1]=new_y;
+				}
+			}
+			
+			function can_move_left(cu_row, cu_col, shape) {
+				for(var i=0;i<4;i++){
+					if(shape[i][1]+cu_col<=0) return false;
+					// added at version 0.9
+					// [new_row,new_col] 表示如果该block向左一格，则它的坐标是
+					new_row = shape[i][0]+cu_row;
+					new_col = shape[i][1]+cu_col-1;
+					if(dead_blocks[new_row*total_col+new_col]) return false;
+				}
+				return true;
+			}
+			
+			function can_move_right(cu_row, cu_col, shape) {
+				for(var i=0;i<4;i++){
+					if(shape[i][1]+cu_col>=9) return false;
+					// added at version 0.9
+					// [new_row,new_col] 表示如果该block向右一格，则它的坐标是
+					new_row = shape[i][0]+cu_row;
+					new_col = shape[i][1]+cu_col+1;
+					if(dead_blocks[new_row*total_col+new_col]) return false;					
+				}
+				return true;
+			}
+
+			function can_move_down(cu_row, cu_col, shape) {
+				for(var i=0;i<4;i++){
+					if(shape[i][0]+cu_row>=19) return false;
+					// added at version 0.9
+					// [new_row,new_col] 表示如果该block下移一行，则它的坐标是
+					new_row = shape[i][0]+cu_row+1;
+					new_col = shape[i][1]+cu_col;
+					if(dead_blocks[new_row*total_col+new_col]) return false;
+				}
+				return true;				
+			}			
+			
+			function keyHandler(e){
+			switch(e.keyCode){
+					case 37: //left
+						if(can_move_left(position_row,position_col,cu_shape)) {position_col-=1;}
+						repaintBoard();
+						drawShape(position_row,position_col,cu_shape);
+						break;
+					case 38: //up
+						repaintBoard();
+						if(can_rotate_clockwise(position_row,position_col,cu_shape)) {
+							rotate_clockwise(cu_shape);
+						}
+						drawShape(position_row,position_col,cu_shape);					
+						break;
+					case 39: //right
+						if(can_move_right(position_row,position_col,cu_shape)) {position_col+=1;}
+						repaintBoard();
+						drawShape(position_row,position_col,cu_shape);
+						break;
+					// modified at version 0.9
+					case 40: //down
+						if(can_move_down(position_row,position_col,cu_shape)) {move_down();}				
+						break;
+				}
+			}
+			
+			function repaintBoard(){
+			for(var i=0;i<total_row;i++)
+				{
+					for(var j=0;j<total_col;j++)
+						{
+							if(dead_blocks[i*total_col+j]==0)
+								{
+									document.getElementById("board").rows[i].cells[j].style.backgroundColor = "#cccccc";
+								}
+						}
+				}
+			}
+	</script>
+	<body onkeydown="keyHandler(event)">
+		<table id="board">
+		<script>
+		initBoard(total_row,total_col);
+		</script>
+		</table>
+	</body>
+</html>
