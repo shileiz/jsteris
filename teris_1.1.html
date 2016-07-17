@@ -1,0 +1,209 @@
+<html>
+	<style>
+	#board tr td {
+		width: 20px;
+		height: 20px;
+		background-Color: #cccccc;
+		border: 1px solid #6B78A9;
+	}
+	</style>
+	<script language="javascript">
+	/*
+
+
+	*/
+			var total_row=20, total_col=10;  
+			var position_row=1, position_col=total_col/2; 
+			var cu_shape=[[0,-1],[0,0],[0,1],[-1,0]];
+			var dead_blocks=new Array(total_row*total_col);
+			
+			function initBoard(row, col) {
+				for(var i = 0; i < row; i++) {
+					document.write('<tr>');
+					for(var j = 0; j < col; j++) {
+						document.write('<td></td>');
+						dead_blocks[i*col+j]=0;
+					}
+					document.write('</tr>');
+				}
+			}			
+			
+			setInterval("move_down()",500)
+			
+			// added at v1.1, 判断一行是否满
+			function is_row_full(row) {
+				for(var i = 0;i < total_col; i++) {
+					if(dead_blocks[row*total_col+i]==0)
+						return false;
+				}
+				return true;
+			}
+			
+			// added at v1.1, 擦除一行，实际上就是把这行只上的行都下移一行，本行被覆盖
+			function earase_row(row) {
+				for(var i=row;i>0;i--){
+					for(var j=0;j<total_col;j++){
+						dead_blocks[i*total_col+j] = dead_blocks[(i-1)*total_col+j]
+					}
+				}
+			}
+			
+				
+			function move_down() {
+				if(can_move_down()) 
+					position_row+=1;
+				else
+				{
+					// 把 cu_shape 的4个block加入到dead_blocks里
+					for(var i=0;i<4;i++)
+					{
+						var dead_block_row = position_row+cu_shape[i][0];
+						var dead_block_col = position_col+cu_shape[i][1];
+						dead_blocks[dead_block_row*total_col+dead_block_col]=1;
+					}
+					// 生成新的 cu_shape
+					position_row=1;
+					position_col=total_col/2;
+				}
+				repaintBoard();
+				drawShape();
+			}			
+			
+			function move_left() {
+				position_col-=1;
+				repaintBoard();
+				drawShape();
+			}
+			
+			function move_right() {
+				position_col+=1;
+				repaintBoard();
+				drawShape();
+			}
+			
+			function move_to_bottom() {
+				while(can_move_down())
+					move_down();
+			}
+			
+			function drawShape() {
+				for(var i=0;i<4;i++){
+					block_row=position_row+cu_shape[i][0];
+					block_col=position_col+cu_shape[i][1];
+					document.getElementById("board").rows[block_row].cells[block_col].style.backgroundColor = "green";
+				}			
+			}
+			
+			function can_rotate_clockwise() {
+				for(var i=0;i<4;i++){
+					old_x=cu_shape[i][0];
+					old_y=cu_shape[i][1];
+					new_x=old_y;
+					new_y=-old_x;
+					if(new_x+position_row<0 || new_x+position_row>19 || new_y+position_col<0 || new_y+position_col>9) return false;
+					new_row = new_x+position_row;
+					new_col = new_y+position_col;
+					if(dead_blocks[new_row*total_col+new_col]) return false;
+				}
+				return true;
+			}			
+			
+			function rotate_clockwise() {
+				for(var i=0;i<4;i++){
+					old_x=cu_shape[i][0];
+					old_y=cu_shape[i][1];
+					new_x=old_y;
+					new_y=-old_x;
+					cu_shape[i][0]=new_x;
+					cu_shape[i][1]=new_y;
+				}
+			}
+			
+			function can_move_left() {
+				for(var i=0;i<4;i++){
+					if(cu_shape[i][1]+position_col<=0) return false;
+					// [new_row,new_col] 表示如果该block向左一格，则它的坐标是
+					new_row = cu_shape[i][0]+position_row;
+					new_col = cu_shape[i][1]+position_col-1;
+					if(dead_blocks[new_row*total_col+new_col]) return false;
+				}
+				return true;
+			}
+			
+			function can_move_right() {
+				for(var i=0;i<4;i++){
+					if(cu_shape[i][1]+position_col>=9) return false;
+					// [new_row,new_col] 表示如果该block向右一格，则它的坐标是
+					new_row = cu_shape[i][0]+position_row;
+					new_col = cu_shape[i][1]+position_col+1;
+					if(dead_blocks[new_row*total_col+new_col]) return false;					
+				}
+				return true;
+			}
+
+			function can_move_down() {
+				for(var i=0;i<4;i++){
+					if(cu_shape[i][0]+position_row>=19) return false;
+					// [new_row,new_col] 表示如果该block下移一行，则它的坐标是
+					new_row = cu_shape[i][0]+position_row+1;
+					new_col = cu_shape[i][1]+position_col;
+					if(dead_blocks[new_row*total_col+new_col]) return false;
+				}
+				return true;				
+			}			
+			
+			function keyHandler(e){
+			switch(e.keyCode){
+					case 37: //left
+						if(can_move_left()) {
+							move_left();
+						}
+						break;
+					case 38: //up
+						if(can_rotate_clockwise()) {
+							rotate_clockwise();
+							repaintBoard();
+							drawShape();
+						}											
+						break;
+					case 39: //right
+						if(can_move_right()) {
+							move_right();
+						}
+						break;
+					case 40: //down
+						// modified at v1.0：move_down 里面已经判断 can_move_down 了（定时器刷新需要），所以这里不用再判断
+						move_down();				
+						break;
+					case 32: //space
+						// modified at v1.0：move_down 里面已经判断 can_move_down 了（定时器刷新需要），所以这里不用再判断
+						move_to_bottom();				
+						break;						
+				}
+			}
+			
+			function repaintBoard(){
+				for(var i=total_row-1;i>=0;i--)
+				{
+					// added at v1.1： 不用if而用while是因为连续消多行用if会有问题
+					while(is_row_full(i)){
+						earase_row(i)
+					}
+					for(var j=0;j<total_col;j++)
+					{
+						if(dead_blocks[i*total_col+j]==0)
+						{
+							document.getElementById("board").rows[i].cells[j].style.backgroundColor = "#cccccc";
+						}
+					}
+				}
+			}
+	</script>
+	<body onkeydown="keyHandler(event)">
+		<table id="board">
+		<script>
+		initBoard(total_row,total_col);
+		</script>
+		</table>
+	</body>
+</html>
