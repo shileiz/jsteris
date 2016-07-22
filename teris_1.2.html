@@ -9,7 +9,14 @@
 	</style>
 	<script language="javascript">
 	/*
-
+	
+		遗留问题：
+		1、没有正方形
+		2、dead_blocks 可能正在被使用的时候被修改：repaintBoard() 的时候，会每一行去判断是否满了，一旦满了就往下窜。
+		   往下窜会改变 dead_blocks 的值，但可能正在改变的时候，新的 shape 已经在下落，每下落一行都要判断是否下面有 dead_block，即使用 dead_block
+		   会造成的现象，举个例子：
+		   最后一行消了，但倒数第二行还来得及窜下来的时候，一个 shape 判断能否落到倒数第二行，结论是不能，所以它就落到了倒数第三行。这时候倒数第二行窜下去了。
+		   这就造成了“悬空”现象。刚刚 dead 的那个 shape 被放到了倒数第三行，而倒数第二行被窜下去了，是空着的。
 	*/
 			var total_row=20, total_col=10;  
 			var position_row=1, position_col=total_col/2; 
@@ -206,8 +213,6 @@
 						{
 							document.getElementById("board").rows[i].cells[j].style.backgroundColor = "#cccccc";
 						}
-						else
-							document.getElementById("board").rows[i].cells[j].style.backgroundColor = "green";
 					}
 				}
 			}
