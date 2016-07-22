@@ -74,7 +74,7 @@
 						dead_blocks[dead_block_row*total_col+dead_block_col]=1;
 					}
 					// 生成新的 cu_shape
-					position_row=1;
+					position_row=2;
 					position_col=total_col/2;
 					cu_shape = gen_shape();
 				}
@@ -96,7 +96,9 @@
 			
 			function move_to_bottom() {
 				while(can_move_down())
-					move_down();
+					position_row+=1;
+				repaintBoard();
+				drawShape();
 			}
 			
 			function drawShape() {
@@ -204,6 +206,8 @@
 						{
 							document.getElementById("board").rows[i].cells[j].style.backgroundColor = "#cccccc";
 						}
+						else
+							document.getElementById("board").rows[i].cells[j].style.backgroundColor = "green";
 					}
 				}
 			}
