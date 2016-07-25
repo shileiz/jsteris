@@ -9,10 +9,10 @@
 	</style>
 	<script language="javascript">
 	/*
-		这个版本加入消行功能，新增2个函数：is_row_full()、earase_row()
+		这个版本加入消行功能，新增2个函数：is_row_full()、erase_row()
 		并在 repaintBoard 对行循环时增加了：					
 			while(is_row_full(i)){
-				earase_row(i)
+				erase_row(i)
 			}
 		注意这里要用一个 while，因为第i行消除后，可能第i行又满了，比如第i和i-1和同时满的情况下
 		另外，要把 repaintBoard 里，对行的循环改为从最下行往上循环，因为消行操作是把消除行上方的block下移一行
@@ -47,7 +47,7 @@
 			}
 			
 			// added at v1.1, 擦除一行，实际上就是把这行只上的行都下移一行，本行被覆盖
-			function earase_row(row) {
+			function erase_row(row) {
 				for(var i=row;i>0;i--){
 					for(var j=0;j<total_col;j++){
 						dead_blocks[i*total_col+j] = dead_blocks[(i-1)*total_col+j]
@@ -58,7 +58,11 @@
 				
 			function move_down() {
 				if(can_move_down()) 
+				{
 					position_row+=1;
+					repaintBoard();
+					drawShape();
+				}
 				else
 				{
 					for(var i=0;i<4;i++)
@@ -67,12 +71,12 @@
 						var dead_block_col = position_col+cu_shape[i][1];
 						dead_blocks[dead_block_row*total_col+dead_block_col]=1;
 					}
+					repaintBoard();
 					// 生成新的 cu_shape
 					position_row=1;
 					position_col=total_col/2;
+					drawShape();
 				}
-				repaintBoard();
-				drawShape();
 			}			
 			
 			function move_left() {
@@ -189,13 +193,17 @@
 				{
 					// added at v1.1： 不用if而用while是因为连续消多行用if会有问题
 					while(is_row_full(i)){
-						earase_row(i)
+						erase_row(i)
 					}
 					for(var j=0;j<total_col;j++)
 					{
 						if(dead_blocks[i*total_col+j]==0)
 						{
 							document.getElementById("board").rows[i].cells[j].style.backgroundColor = "#cccccc";
+						}
+						else
+						{
+							document.getElementById("board").rows[i].cells[j].style.backgroundColor = "green";
 						}
 					}
 				}

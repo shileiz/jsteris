@@ -12,11 +12,6 @@
 	
 		遗留问题：
 		1、没有正方形
-		2、dead_blocks 可能正在被使用的时候被修改：repaintBoard() 的时候，会每一行去判断是否满了，一旦满了就往下窜。
-		   往下窜会改变 dead_blocks 的值，但可能正在改变的时候，新的 shape 已经在下落，每下落一行都要判断是否下面有 dead_block，即使用 dead_block
-		   会造成的现象，举个例子：
-		   最后一行消了，但倒数第二行还来得及窜下来的时候，一个 shape 判断能否落到倒数第二行，结论是不能，所以它就落到了倒数第三行。这时候倒数第二行窜下去了。
-		   这就造成了“悬空”现象。刚刚 dead 的那个 shape 被放到了倒数第三行，而倒数第二行被窜下去了，是空着的。
 	*/
 			var total_row=20, total_col=10;  
 			var position_row=1, position_col=total_col/2; 
@@ -28,15 +23,15 @@
 			var L_opposite_shape = [[0,0],[0,-1],[-1,0],[-2,0]];
 			var I_shape = [[1,0],[0,0],[-1,0],[-2,0]];
 			var Z_shape = [[-1,-1],[-1,0],[0,0],[0,1]];
-			var Z_opposite_shape = [[0,-1],[0,0],[-1,0],[-1,-1]];
-			
+			var Z_opposite_shape = [[0,-1],[0,0],[-1,0],[-1,-1]];		
 			var Shapes = [T_shape, L_shape, L_opposite_shape, I_shape, Z_shape, Z_opposite_shape];
-			var cu_shape = gen_shape();
-			
+			var cu_shape = gen_shape();			
 			function gen_shape() {
 				var shape_index = Math.floor((Math.random()*10))%5;
 				return Shapes[shape_index];
 			}
+			
+			
 			function initBoard(row, col) {
 				for(var i = 0; i < row; i++) {
 					document.write('<tr>');
@@ -71,7 +66,11 @@
 				
 			function move_down() {
 				if(can_move_down()) 
+				{
 					position_row+=1;
+					repaintBoard();
+					drawShape();
+				}
 				else
 				{
 					for(var i=0;i<4;i++)
@@ -80,14 +79,14 @@
 						var dead_block_col = position_col+cu_shape[i][1];
 						dead_blocks[dead_block_row*total_col+dead_block_col]=1;
 					}
+					repaintBoard();
 					// 生成新的 cu_shape
+					cu_shape = gen_shape();
 					position_row=2;
 					position_col=total_col/2;
-					cu_shape = gen_shape();
+					drawShape();
 				}
-				repaintBoard();
-				drawShape();
-			}			
+			}				
 			
 			function move_left() {
 				position_col-=1;
@@ -213,6 +212,10 @@
 						{
 							document.getElementById("board").rows[i].cells[j].style.backgroundColor = "#cccccc";
 						}
+						else
+						{
+							document.getElementById("board").rows[i].cells[j].style.backgroundColor = "green";
+						}						
 					}
 				}
 			}
